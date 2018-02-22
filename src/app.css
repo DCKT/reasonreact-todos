@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 .App {
   text-align: center;
 }
@@ -16,13 +20,50 @@
 
 .App-intro {
   font-size: large;
+  max-width: 500px;
+  margin: auto;
 }
 
 .App-input {
   border: 3px solid #ccc;
-  border-radius: 2px;
+  border-radius: 4px 0 0 4px;
   padding: 10px;
+  height: 50px;
   font-size: 18px;
+  border-right: none;
+}
+
+.App-input-submit {
+  padding: 15px;
+  font-size: 17px;
+  height: 50px;
+  font-weight: bold;
+  background: #06beb6; /* fallback for old browsers */
+  background: -webkit-linear-gradient(to top, #48b1bf, #06beb6); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(
+    to top,
+    #48b1bf,
+    #06beb6
+  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  color: #fff;
+  border: none;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 1px rgba(24, 24, 24, 0.4);
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+
+.App-error  {
+  color: #fff;
+}
+
+.App-todo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 10px;
+  border: 1px solid #ccc;
+  margin-top: 10px;
 }
 
 @keyframes App-logo-spin {

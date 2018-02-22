@@ -1,11 +1,22 @@
+type todoId = int;
+type todoItem = {
+  id: todoId,
+  value: string,
+  completed: bool
+};
+
 type state = {
-  todos: list(string),
-  input: string
+  todos: list(todoItem),
+  input: string,
+  formError: bool
 };
 
 type action =
+  | RaiseFormError
   | UpdateInput(string)
-  | AddTodo(string);
+  | RemoveTodo(todoId)
+  | AddTodo(todoItem)
+  | UpdateTodoCompletion(todoId);
 
 [%bs.raw {|require('./app.css')|}];
 
@@ -13,14 +24,26 @@ type action =
 
 let component = ReasonReact.reducerComponent("App");
 
+[@bs.val] external dateNow : unit => int = "Date.now";
+
 let make = _children => {
   ...component,
-  initialState: () => {todos: [], input: ""},
+  initialState: () => {todos: [], input: "", formError: false},
   reducer: (action, state) =>
     switch action {
+    | RaiseFormError => ReasonReact.Update({...state, formError: true})
     | AddTodo(value) =>
       ReasonReact.Update({...state, todos: [value, ...state.todos]})
     | UpdateInput(input) => ReasonReact.Update({...state, input})
+    | UpdateTodoCompletion(id) => ReasonReact.Update({ ...state,  todos: List.map(todo => {
+      ...todo,
+      completed: id == todo.id ? !todo.completed : todo.completed
+    }, state.todos) })
+    | RemoveTodo(id) =>
+      ReasonReact.Update({
+        ...state,
+        todos: List.filter(todo => todo.id != id, state.todos)
+      })
     },
   render: self =>
     <div className="App">
@@ -31,23 +54,45 @@ let make = _children => {
           onSubmit=(
             event => {
               ReactEventRe.Form.preventDefault(event);
-              self.send(AddTodo(self.state.input));
+              switch self.state.input {
+              | "" => self.send(RaiseFormError)
+
+              | _ => self.send(AddTodo({
+                id: dateNow(),
+                completed: false,
+                value: self.state.input
+              }))
+              };
+              
             }
           )>
-          <input
-            _type="text"
-            placeholder="Add a todo"
-            className="App-input"
-            onChange=(
-              event =>
-                self.send(
-                  UpdateInput(
-                    ReactDOMRe.domElementToObj(ReactEventRe.Form.target(event))##value
+          <div>
+            <input
+              _type="text"
+              placeholder="Add a todo"
+              className="App-input"
+              onChange=(
+                event =>
+                  self.send(
+                    UpdateInput(
+                      ReactDOMRe.domElementToObj(
+                        ReactEventRe.Form.target(event)
+                      )##value
+                    )
                   )
-                )
-            )
-          />
-          <button> (ReasonReact.stringToElement("Add")) </button>
+              )
+            />
+            <button className="App-input-submit">
+              (ReasonReact.stringToElement("Add"))
+            </button>
+          </div>
+          (
+            self.state.formError ?
+              <p className="App-error">
+                (ReasonReact.stringToElement("Field required"))
+              </p> :
+              ReasonReact.nullElement
+          )
         </form>
       </div>
       <div className="App-intro">
@@ -55,7 +100,23 @@ let make = _children => {
           ReasonReact.arrayToElement(
             Array.of_list(
               List.map(
-                todo => <div> (ReasonReact.stringToElement(todo)) </div>,
+                todo =>
+                  <div key=(string_of_int(todo.id)) className="App-todo">
+                    <input
+                      _type="checkbox"
+                      className="App-todo-check"
+                      checked=(Js.Boolean.to_js_boolean(todo.completed))
+                      onChange={_event => {
+                        self.send(UpdateTodoCompletion(todo.id))
+                      }}
+                    />
+                    (ReasonReact.stringToElement(todo.value))
+                    <button
+                      className="App-todo-delete"
+                      onClick=(_event => self.send(RemoveTodo(todo.id)))>
+                      (ReasonReact.stringToElement("x"))
+                    </button>
+                  </div>,
                 self.state.todos
               )
             )
