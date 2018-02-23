@@ -1,4 +1,5 @@
 type todoId = int;
+
 type todoItem = {
   id: todoId,
   value: string,
@@ -33,12 +34,20 @@ let make = _children => {
     switch action {
     | RaiseFormError => ReasonReact.Update({...state, formError: true})
     | AddTodo(value) =>
-      ReasonReact.Update({...state, todos: [value, ...state.todos]})
+      ReasonReact.Update({...state, input: "", todos: [value, ...state.todos]})
     | UpdateInput(input) => ReasonReact.Update({...state, input})
-    | UpdateTodoCompletion(id) => ReasonReact.Update({ ...state,  todos: List.map(todo => {
-      ...todo,
-      completed: id == todo.id ? !todo.completed : todo.completed
-    }, state.todos) })
+    | UpdateTodoCompletion(id) =>
+      ReasonReact.Update({
+        ...state,
+        todos:
+          List.map(
+            todo => {
+              ...todo,
+              completed: id == todo.id ? ! todo.completed : todo.completed
+            },
+            state.todos
+          )
+      })
     | RemoveTodo(id) =>
       ReasonReact.Update({
         ...state,
@@ -56,14 +65,15 @@ let make = _children => {
               ReactEventRe.Form.preventDefault(event);
               switch self.state.input {
               | "" => self.send(RaiseFormError)
-
-              | _ => self.send(AddTodo({
-                id: dateNow(),
-                completed: false,
-                value: self.state.input
-              }))
+              | _ =>
+                self.send(
+                  AddTodo({
+                    id: dateNow(),
+                    completed: false,
+                    value: self.state.input
+                  })
+                )
               };
-              
             }
           )>
           <div>
@@ -71,6 +81,7 @@ let make = _children => {
               _type="text"
               placeholder="Add a todo"
               className="App-input"
+              value=self.state.input
               onChange=(
                 event =>
                   self.send(
@@ -106,9 +117,9 @@ let make = _children => {
                       _type="checkbox"
                       className="App-todo-check"
                       checked=(Js.Boolean.to_js_boolean(todo.completed))
-                      onChange={_event => {
-                        self.send(UpdateTodoCompletion(todo.id))
-                      }}
+                      onChange=(
+                        _event => self.send(UpdateTodoCompletion(todo.id))
+                      )
                     />
                     (ReasonReact.stringToElement(todo.value))
                     <button
