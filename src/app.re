@@ -6,10 +6,16 @@ type todoItem = {
   completed: bool
 };
 
+type filter =
+  | All
+  | Completed
+  | Remaining;
+
 type state = {
   todos: list(todoItem),
   input: string,
-  formError: bool
+  formError: bool,
+  filter
 };
 
 type action =
@@ -17,6 +23,7 @@ type action =
   | UpdateInput(string)
   | RemoveTodo(todoId)
   | AddTodo(todoItem)
+  | SetFilter(filter)
   | UpdateTodoCompletion(todoId);
 
 [%bs.raw {|require('./app.css')|}];
@@ -29,7 +36,7 @@ let component = ReasonReact.reducerComponent("App");
 
 let make = _children => {
   ...component,
-  initialState: () => {todos: [], input: "", formError: false},
+  initialState: () => {todos: [], input: "", formError: false, filter: All},
   reducer: (action, state) =>
     switch action {
     | RaiseFormError => ReasonReact.Update({...state, formError: true})
@@ -53,6 +60,7 @@ let make = _children => {
         ...state,
         todos: List.filter(todo => todo.id != id, state.todos)
       })
+    | SetFilter(filter) => ReasonReact.Update({...state, filter})
     },
   render: self =>
     <div className="App">
@@ -105,6 +113,17 @@ let make = _children => {
               ReasonReact.nullElement
           )
         </form>
+        <div>
+          <button onClick=(_event => self.send(SetFilter(All)))>
+            (ReasonReact.stringToElement("All"))
+          </button>
+          <button onClick=(_event => self.send(SetFilter(Completed)))>
+            (ReasonReact.stringToElement("Completed"))
+          </button>
+          <button onClick=(_event => self.send(SetFilter(Remaining)))>
+            (ReasonReact.stringToElement("Remaining"))
+          </button>
+        </div>
       </div>
       <div className="App-intro">
         (
@@ -128,7 +147,13 @@ let make = _children => {
                       (ReasonReact.stringToElement("x"))
                     </button>
                   </div>,
-                self.state.todos
+                switch self.state.filter {
+                | All => self.state.todos
+                | Completed =>
+                  List.filter(todo => todo.completed, self.state.todos)
+                | Remaining =>
+                  List.filter(todo => ! todo.completed, self.state.todos)
+                }
               )
             )
           )
