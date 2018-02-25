@@ -1,18 +1,10 @@
-type todoId = int;
-
-type todoItem = {
-  id: todoId,
-  value: string,
-  completed: bool
-};
-
 type filter =
   | All
   | Completed
   | Remaining;
 
 type state = {
-  todos: list(todoItem),
+  todos: list(TodoItem.todo),
   input: string,
   formError: bool,
   filter
@@ -21,10 +13,10 @@ type state = {
 type action =
   | RaiseFormError
   | UpdateInput(string)
-  | RemoveTodo(todoId)
-  | AddTodo(todoItem)
+  | RemoveTodo(TodoItem.todoId)
+  | AddTodo(TodoItem.todo)
   | SetFilter(filter)
-  | UpdateTodoCompletion(todoId);
+  | UpdateTodoCompletion(TodoItem.todoId);
 
 let setClassName = (~default="", ~optionals=?, ()) =>
   default
@@ -59,7 +51,7 @@ let make = _children => {
         ...state,
         todos:
           List.map(
-            todo => {
+            (todo: TodoItem.todo) => {
               ...todo,
               completed: id == todo.id ? ! todo.completed : todo.completed
             },
@@ -69,7 +61,7 @@ let make = _children => {
     | RemoveTodo(id) =>
       ReasonReact.Update({
         ...state,
-        todos: List.filter(todo => todo.id != id, state.todos)
+        todos: List.filter((todo: TodoItem.todo) => todo.id != id, state.todos)
       })
     | SetFilter(filter) => ReasonReact.Update({...state, filter})
     },
@@ -171,29 +163,27 @@ let make = _children => {
           ReasonReact.arrayToElement(
             Array.of_list(
               List.map(
-                todo =>
-                  <div key=(string_of_int(todo.id)) className="App-todo">
-                    <input
-                      _type="checkbox"
-                      className="App-todo-check"
-                      checked=(Js.Boolean.to_js_boolean(todo.completed))
-                      onChange=(
-                        _event => self.send(UpdateTodoCompletion(todo.id))
-                      )
-                    />
-                    (ReasonReact.stringToElement(todo.value))
-                    <button
-                      className="App-todo-delete"
-                      onClick=(_event => self.send(RemoveTodo(todo.id)))>
-                      (ReasonReact.stringToElement("x"))
-                    </button>
-                  </div>,
+                (todo: TodoItem.todo) =>
+                  <TodoItem
+                    key=(string_of_int(todo.id))
+                    todo
+                    onCompletionChange=(
+                      _event => self.send(UpdateTodoCompletion(todo.id))
+                    )
+                    onDelete=(_event => self.send(RemoveTodo(todo.id)))
+                  />,
                 switch self.state.filter {
                 | All => self.state.todos
                 | Completed =>
-                  List.filter(todo => todo.completed, self.state.todos)
+                  List.filter(
+                    (todo: TodoItem.todo) => todo.completed,
+                    self.state.todos
+                  )
                 | Remaining =>
-                  List.filter(todo => ! todo.completed, self.state.todos)
+                  List.filter(
+                    (todo: TodoItem.todo) => ! todo.completed,
+                    self.state.todos
+                  )
                 }
               )
             )
