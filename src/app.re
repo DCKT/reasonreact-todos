@@ -26,6 +26,17 @@ type action =
   | SetFilter(filter)
   | UpdateTodoCompletion(todoId);
 
+let setClassName = (~default="", ~optionals=?, ()) =>
+  default
+  ++ " "
+  ++ String.concat(
+       " ",
+       switch optionals {
+       | None => []
+       | Some(list) => list
+       }
+     );
+
 [%bs.raw {|require('./app.css')|}];
 
 [@bs.module] external logo : string = "./logo.svg";
@@ -113,14 +124,44 @@ let make = _children => {
               ReasonReact.nullElement
           )
         </form>
-        <div>
-          <button onClick=(_event => self.send(SetFilter(All)))>
+        <div className="App-filters">
+          <button
+            className=(
+              setClassName(
+                ~default="App-filter",
+                ~optionals=[
+                  self.state.filter == All ? "App-filter--active" : ""
+                ],
+                ()
+              )
+            )
+            onClick=(_event => self.send(SetFilter(All)))>
             (ReasonReact.stringToElement("All"))
           </button>
-          <button onClick=(_event => self.send(SetFilter(Completed)))>
+          <button
+            className=(
+              setClassName(
+                ~default="App-filter",
+                ~optionals=[
+                  self.state.filter == Completed ? "App-filter--active" : ""
+                ],
+                ()
+              )
+            )
+            onClick=(_event => self.send(SetFilter(Completed)))>
             (ReasonReact.stringToElement("Completed"))
           </button>
-          <button onClick=(_event => self.send(SetFilter(Remaining)))>
+          <button
+            className=(
+              setClassName(
+                ~default="App-filter",
+                ~optionals=[
+                  self.state.filter == Remaining ? "App-filter--active" : ""
+                ],
+                ()
+              )
+            )
+            onClick=(_event => self.send(SetFilter(Remaining)))>
             (ReasonReact.stringToElement("Remaining"))
           </button>
         </div>
