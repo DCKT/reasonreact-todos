@@ -27,25 +27,30 @@ let make = _children => {
     switch action {
     | AddTodo(todo) =>
       let todos = [todo, ...state.todos];
-      LocalStorage.save(todos);
-      ReasonReact.Update({...state, input: "", todos});
+      ReasonReact.UpdateWithSideEffects(
+        {...state, input: "", todos},
+        (_self => LocalStorage.save(todos))
+      );
     | UpdateTodoCompletion(id) =>
-      ReasonReact.Update({
-        ...state,
-        todos:
-          List.map(
-            (todo: TodoItem.todo) => {
-              ...todo,
-              completed: id == todo.id ? ! todo.completed : todo.completed
-            },
-            state.todos
-          )
-      })
+      let todos =
+        List.map(
+          (todo: TodoItem.todo) => {
+            ...todo,
+            completed: id == todo.id ? ! todo.completed : todo.completed
+          },
+          state.todos
+        );
+      ReasonReact.UpdateWithSideEffects(
+        {...state, todos},
+        (_self => LocalStorage.save(todos))
+      );
     | RemoveTodo(id) =>
       let todos =
         List.filter((todo: TodoItem.todo) => todo.id != id, state.todos);
-      LocalStorage.save(todos);
-      ReasonReact.Update({...state, todos});
+      ReasonReact.UpdateWithSideEffects(
+        {...state, todos},
+        (_self => LocalStorage.save(todos))
+      );
     | SetFilter(filter) => ReasonReact.Update({...state, filter})
     },
   render: self =>
