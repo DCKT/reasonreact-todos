@@ -8,6 +8,8 @@ type todo = {
 
 let component = ReasonReact.statelessComponent("TodoItem");
 
+[%bs.raw {| require('./todoItem.css') |}];
+
 let make = (~todo, ~onCompletionChange, ~onDelete, _children) => {
   ...component,
   render: _self =>
