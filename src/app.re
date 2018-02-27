@@ -67,19 +67,13 @@ let make = _children => {
                     )
                     onDelete=(_event => self.send(RemoveTodo(todo.id)))
                   />,
-                switch self.state.filter {
-                | All => self.state.todos
-                | Completed =>
-                  List.filter(
-                    (todo: TodoItem.todo) => todo.completed,
-                    self.state.todos
-                  )
-                | Remaining =>
-                  List.filter(
-                    (todo: TodoItem.todo) => ! todo.completed,
-                    self.state.todos
-                  )
-                }
+                List.filter((todo: TodoItem.todo) =>
+                  switch todo.completed {
+                  | All => true
+                  | Completed => todo.completed
+                  | Remaining => ! todo.completed
+                  }
+                )
               )
             )
           )
