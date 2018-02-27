@@ -18,6 +18,10 @@ let component = ReasonReact.reducerComponent("App");
 let make = _children => {
   ...component,
   initialState: () => {todos: [], input: "", formError: false, filter: All},
+  didMount: self => {
+    Js.log("Hello mount");
+    ReasonReact.NoUpdate;
+  },
   reducer: (action, state) =>
     switch action {
     | AddTodo(value) =>
@@ -67,12 +71,14 @@ let make = _children => {
                     )
                     onDelete=(_event => self.send(RemoveTodo(todo.id)))
                   />,
-                List.filter((todo: TodoItem.todo) =>
-                  switch todo.completed {
-                  | All => true
-                  | Completed => todo.completed
-                  | Remaining => ! todo.completed
-                  }
+                List.filter(
+                  (todo: TodoItem.todo) =>
+                    switch self.state.filter {
+                    | All => true
+                    | Completed => todo.completed
+                    | Remaining => ! todo.completed
+                    },
+                  self.state.todos
                 )
               )
             )
