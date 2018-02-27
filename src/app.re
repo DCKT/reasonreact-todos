@@ -11,21 +11,24 @@ type action =
   | SetFilter(Filters.t)
   | UpdateTodoCompletion(TodoItem.todoId);
 
-let component = ReasonReact.reducerComponent("App");
+open LocalStorage;
 
-[@bs.val] external dateNow : unit => int = "Date.now";
+let component = ReasonReact.reducerComponent("App");
 
 let make = _children => {
   ...component,
-  initialState: () => {todos: [], input: "", formError: false, filter: All},
-  didMount: self => {
-    Js.log("Hello mount");
-    ReasonReact.NoUpdate;
+  initialState: () => {
+    todos: LocalStorage.getAll(),
+    input: "",
+    formError: false,
+    filter: All
   },
   reducer: (action, state) =>
     switch action {
-    | AddTodo(value) =>
-      ReasonReact.Update({...state, input: "", todos: [value, ...state.todos]})
+    | AddTodo(todo) =>
+      let todos = [todo, ...state.todos];
+      LocalStorage.save(todos);
+      ReasonReact.Update({...state, input: "", todos});
     | UpdateTodoCompletion(id) =>
       ReasonReact.Update({
         ...state,
@@ -39,10 +42,10 @@ let make = _children => {
           )
       })
     | RemoveTodo(id) =>
-      ReasonReact.Update({
-        ...state,
-        todos: List.filter((todo: TodoItem.todo) => todo.id != id, state.todos)
-      })
+      let todos =
+        List.filter((todo: TodoItem.todo) => todo.id != id, state.todos);
+      LocalStorage.save(todos);
+      ReasonReact.Update({...state, todos});
     | SetFilter(filter) => ReasonReact.Update({...state, filter})
     },
   render: self =>
@@ -50,7 +53,14 @@ let make = _children => {
       <Header />
       <Form
         onSubmit=(
-          value => self.send(AddTodo({id: dateNow(), value, completed: false}))
+          value =>
+            self.send(
+              AddTodo({
+                id: int_of_float(Js.Date.now()),
+                value,
+                completed: false
+              })
+            )
         )
       />
       <Filters
